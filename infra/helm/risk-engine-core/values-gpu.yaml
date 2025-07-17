@@ -1,0 +1,10 @@
+computeTier: gpu-optimized
+cuda:
+  enabled: true
+  version: "12.4"
+nodeSelector:
+  cloud.google.com/gke-accelerator: nvidia-tesla-t4
+tolerations:
+- key: nvidia.com/gpu
+  operator: Exists
+  effect: NoSchedule

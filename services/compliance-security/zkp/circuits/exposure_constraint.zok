@@ -1,0 +1,18 @@
+import "hashes/sha256/512bitPadded" as sha256;
+
+def main(private field portfolio_value, field max_exposure, private field[5] positions) -> bool:
+    // 1. Verify portfolio commitment
+    field computed_hash = sha256(positions);
+    assert(computed_hash == portfolio_value);
+    
+    // 2. Validate concentration limits
+    field total = 0.0;
+    for u32 i in 0..5 {
+        total += positions[i];
+        // Single position <= 25% of total
+        assert(positions[i] <= total / 4); 
+    }
+    
+    // 3. Total exposure check
+    assert(total <= max_exposure);
+    return true;

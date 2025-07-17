@@ -1,0 +1,24 @@
+import "hashes/sha256/512bitPadded" as sha256;
+import "utils/pack/128bit" as pack128;
+
+def main(
+    private field[4] positions,  // [equity, fixed_income, derivatives, cash]
+    private field total_value,
+    field max_exposure,
+    private field client_id
+) -> bool {
+    // 1. Validate portfolio commitment
+    field computed_hash = sha256(pack128(positions));
+    assert(computed_hash == total_value);
+    
+    // 2. FINMA concentration rules (Art. 42)
+    field total = positions[0] + positions[1] + positions[2] + positions[3];
+    assert(positions[0] <= total * 0.25);  // Max 25% equity
+    assert(positions[2] <= total * 0.15);  // Max 15% derivatives
+    
+    // 3. Client exposure limit
+    assert(total <= max_exposure);
+    
+    // 4. Privacy: client_id remains private
+    return true;
+}

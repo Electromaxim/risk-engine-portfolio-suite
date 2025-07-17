@@ -1,0 +1,30 @@
+import "hashes/sha256/512bitPadded" as sha256;
+import "utils/pack/128bit" as pack128;
+import "finance/var" as risk_metrics;
+
+def main(
+    private field[4] positions,  // [equity, fixed_income, derivatives, cash]
+    private field total_value,
+    field max_exposure,
+    private field client_risk_tier,
+    field max_liquidity_risk
+) -> bool {
+    // 1. Portfolio commitment
+    field computed_hash = sha256(pack128(positions));
+    assert(computed_hash == total_value);
+    
+    // 2. FINMA concentration rules (Art. 42)
+    field total = positions[0] + positions[1] + positions[2] + positions[3];
+    assert(positions[0] <= total * 0.25);  // Equity cap
+    assert(positions[2] <= total * 0.15);  // Derivatives cap
+    
+    // 3. Liquidity risk constraint
+    field liquidity_risk = risk_metrics.calculate_liquidity_risk(positions);
+    assert(liquidity_risk <= max_liquidity_risk);
+    
+    // 4. Client-tier exposure limit
+    field tier_multiplier = if client_risk_tier == 1 then 1.0 else 0.7 fi;
+    assert(total <= max_exposure * tier_multiplier);
+    
+    return true;
+}

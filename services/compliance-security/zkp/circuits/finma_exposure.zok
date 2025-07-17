@@ -1,0 +1,26 @@
+import "hashes/sha256/512bitPadded" as sha256;
+import "finance/constraints" as finma;
+
+def main(
+    private field[4] asset_values,  // [equity, bonds, derivatives, cash]
+    private field total_value,
+    field max_exposure,
+    private field client_risk_tier,
+    field max_liquidity_risk
+) {
+    // 1. Portfolio commitment
+    field computed_hash = sha256(asset_values);
+    assert(computed_hash == total_value);
+    
+    // 2. FINMA concentration rules (Art. 42)
+    finma.equity_concentration(asset_values[0], total_value);
+    finma.derivatives_concentration(asset_values[2], total_value);
+    
+    // 3. Liquidity risk constraint
+    field liquidity_risk = finma.liquidity_metric(asset_values);
+    assert(liquidity_risk < max_liquidity_risk);
+    
+    // 4. Client-tier exposure limit
+    field tier_multiplier = if client_risk_tier == 1 { 1.0 } else { 0.7 };
+    assert(total_value <= max_exposure * tier_multiplier);
+}
