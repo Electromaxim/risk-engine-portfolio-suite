@@ -1,5 +1,6 @@
 from fastapi import APIRouter
-from .zkp.exposure_verifier import ExposureVerifier
+#from .zkp.exposure_verifier import ExposureVerifier
+from .sgx.gramine_verifier import SGXExposureVerifier as Verifier
 
 router = APIRouter()
 verifier = ExposureVerifier()
