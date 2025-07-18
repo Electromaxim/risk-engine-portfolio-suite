@@ -1,8 +1,62 @@
-class VersionedKnowledgeGraph(RiskKnowledgeGraph):  
+# services/ai-risk-copilot/assistant/graph_versioning.py
+import jsonschema
+from neo4j import GraphDatabase
+
+class VersionedKnowledgeGraph:
+    SCHEMA_VERSIONS = {
+        "2025.1": V1_SCHEMA,
+        "2025.2": V2_SCHEMA
+    }
+    
+    def validate_version(self, version: str) -> bool:
+        """Formal schema validation using JSON Schema"""
+        if version not in self.SCHEMA_VERSIONS:
+            raise InvalidVersionError(f"Unsupported version {version}")
+        return jsonschema.validate(self.current_schema, self.SCHEMA_VERSIONS[version])
+    
+    def rollback(self, target_version: str):
+        """Transactional rollback with audit trail"""
+        with self.driver.session() as session:
+            session.write_transaction(
+                self._execute_rollback, 
+                current_version=self.version,
+                target_version=target_version
+            )
+            self.version = target_version
+            
+    @staticmethod
+    def _execute_rollback(tx, current_version: str, target_version: str):
+        tx.run("""
+        MATCH (n {version: $current_version})
+        WHERE n.version > $target_version
+        DETACH DELETE n
+        """, current_version=current_version, target_version=target_version)
+        tx.run("""
+        CREATE (r:RollbackEvent {
+            timestamp: datetime(),
+            from_version: $current_version,
+            to_version: $target_version,
+            initiator: $user
+        })
+        """, user=get_current_user())
+        
+        
+    class VersionedKnowledgeGraph(RiskKnowledgeGraph):  
     SCHEMA_VERSIONS = {  
         "2025.1": self._v1_schema,  
         "2025.2": self._v2_schema  
     }  
+
+    def validate_version(self, version: str) -> bool:
+        """Formal schema validation using JSON Schema"""
+        if version not in SCHEMA_VERSIONS:
+            raise InvalidVersionError(f"Unsupported version {version}")
+        return jsonschema.validate(self.current_schema, SCHEMA_VERSIONS[version])
+    
+    def rollback(self, stable_version="2025.1"):
+        """Transactional rollback with audit trail"""
+        with self.driver.session() as session:
+            session.run(f"MATCH (n) WHERE n.version > {stable_version} DETACH DELETE n")
 
     def __init__(self, version="2025.2"):  
         self.schema = SCHEMA_VERSIONS[version]  

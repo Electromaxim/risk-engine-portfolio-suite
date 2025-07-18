@@ -16,6 +16,17 @@ resource "aws_s3_bucket" "risk_audit_logs" {
   }
 }
 
+# infra/terraform/audit_logs.tf - Critical Fix
+resource "aws_s3_bucket_object_lock_configuration" "audit_lock" {
+  object_lock_enabled = "Enabled"
+  rule {
+    default_retention {
+      mode = "COMPLIANCE"  # Change from GOVERNANCE
+      years = 7
+    }
+  }
+}
+
 resource "aws_s3_bucket_policy" "audit_lock_policy" {
   bucket = aws_s3_bucket.risk_audit_logs.id
 

@@ -5,6 +5,8 @@ __global__ void heston_simulate(
     float kappa, float theta, float sigma, float rho, 
     float T, int N, int n_paths
 ) {
+    half h_S0 = __float2half(S0);
+    half h_v0 = __float2half(v0);
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= n_paths) return;
 

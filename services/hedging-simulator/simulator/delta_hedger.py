@@ -58,3 +58,11 @@ class ProductionDeltaHedger:
     def _compute_delta(self, S: float, t: float, v: float, params: dict) -> float:
         """Delta calculation using calibrated parameters"""
         # Implementation same as before
+# services/hedging-simulator/simulator/delta_hedger.py
+class GPUDeltaHedger(ProductionDeltaHedger):
+    async def hedge_portfolio(self, portfolio_id: int):
+        """Asynchronous hedging using CUDA streams"""
+        with cuda.stream(), cuda.pinned(portfolio):
+            paths = await simulate_heston_gpu(portfolio)
+            deltas = self._compute_deltas(paths)
+            await self._execute_hedges(deltas)

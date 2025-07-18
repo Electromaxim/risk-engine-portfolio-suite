@@ -1,0 +1,9 @@
+jobs:
+  pre-deploy:
+    steps:
+      - name: Validate FINMA compliance
+        run: pytest tests/regulatory --junitxml=report.xml
+      - name: Check attestation status
+        run: |
+          az attestation validate -n risk-attestation \
+          --attestation-type SGX-IntelSDK
