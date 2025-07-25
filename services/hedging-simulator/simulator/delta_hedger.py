@@ -1,7 +1,7 @@
 import numpy as np
 from services.risk-engine-core.models.heston_gpu import simulate_heston_gpu
 
-class ProductionDeltaHedger:
+class DeltaHedger:
     def __init__(self, portfolio, risk_free_rate: float = 0.01, transaction_cost: float = 0.0001):
         self.portfolio = portfolio
         self.r = risk_free_rate

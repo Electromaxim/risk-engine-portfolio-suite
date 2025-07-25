@@ -7,34 +7,34 @@ logger = get_logger(__name__)
 config = get_config()
 client = OpenAI(api_key=config.OPENAI_API_KEY)
 
-class AnomalyExplainer:
-    SYSTEM_PROMPT = """
-    You are a senior risk quant at top-tier Hedge fund. Explain model residual anomalies using:
-    - Statistical properties
-    - Market context
-    - Historical precedents
-    Output in JSON format: {"severity": "high/medium/low", "root_cause": "...", "action_items": ["..."]}
-    """
-    
-    def generate_insight(self, residual_analysis: dict, market_context: str) -> dict:
-        user_prompt = f"""
-        Residual Analysis:
-        {json.dumps(residual_analysis, indent=2)}
-        
-        Market Context:
-        {market_context}
-        """
-        
-        response = client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[
-                {"role": "system", "content": self.SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.2
-        )
-        return json.loads(response.choices[0].message.content)
+#class AnomalyExplainer:
+#    SYSTEM_PROMPT = """
+#    You are a senior risk quant at top-tier Hedge fund. Explain model residual anomalies using:
+#    - Statistical properties
+#    - Market context
+#    - Historical precedents
+#    Output in JSON format: {"severity": "high/medium/low", "root_cause": "...", "action_items": ["..."]}
+#    """
+#   
+#    def generate_insight(self, residual_analysis: dict, market_context: str) -> dict:
+#       user_prompt = f"""
+#        Residual Analysis:
+#        {json.dumps(residual_analysis, indent=2)}
+#        
+#        Market Context:
+#        {market_context}
+#        """
+#        
+#        response = client.chat.completions.create(
+#            model="gpt-4-turbo",
+#            messages=[
+#                {"role": "system", "content": self.SYSTEM_PROMPT},
+#                {"role": "user", "content": user_prompt}
+#            ],
+#            response_format={"type": "json_object"},
+#            temperature=0.2
+#        )
+#        return json.loads(response.choices[0].message.content)
         
         
 class InsightGenerator:

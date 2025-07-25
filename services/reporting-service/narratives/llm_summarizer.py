@@ -33,7 +33,8 @@ class RiskReportGenerator:
         
         Generate comprehensive risk assessment.
         """
-        
+    def _fallback_response(self):  
+        return { ... }  # Default JSON structure  
         response = client.chat.completions.create(
             model="gpt-4-turbo",
             messages=[

@@ -13,6 +13,8 @@ class MarketContextEngine:
         "GT10 Govt",  # Rates
         "EURUSD Curncy"  # FX
     ]
+    def __init__(self, connector):  
+        self.bloomberg = connector  
     
     def __init__(self):
         self.bloomberg = BloombergConnector()

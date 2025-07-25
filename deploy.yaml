@@ -7,3 +7,5 @@ jobs:
         run: |
           az attestation validate -n risk-attestation \
           --attestation-type SGX-IntelSDK
+          - name: Validate FINMA rule consistency  
+        run: python services/compliance-security/rule_engine/consistency.py  

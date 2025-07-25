@@ -45,7 +45,8 @@ class RiskStreamManager:
                 break
 
 # FastAPI Endpoint
-@app.websocket("/live-risk/{portfolio_id}")
+#@app.websocket("/live-risk/{portfolio_id}")
+@app.websocket("/live-risk/{portfolio_id}")  
 async def risk_stream(websocket: WebSocket, portfolio_id: int):
     manager = RiskStreamManager()
     await manager.connect(websocket, portfolio_id)

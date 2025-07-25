@@ -16,3 +16,7 @@ def test_volatility_clustering_detection():
     assert results["volatility_clustering"] > 0.4  # High persistence
     assert results["stationary"] is False
     assert sum(results["anomalies"]) > 40  # Expected anomalies
+    
+    
+    def test_full_analysis(self):  
+    # ...  

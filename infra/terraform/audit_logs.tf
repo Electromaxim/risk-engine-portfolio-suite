@@ -1,3 +1,4 @@
+# infra/terraform/audit_logs.tf
 resource "aws_s3_bucket" "risk_audit_logs" {
   bucket = "rothschild-risk-audit-${var.env}"
   
@@ -5,7 +6,7 @@ resource "aws_s3_bucket" "risk_audit_logs" {
     object_lock_enabled = "Enabled"
     rule {
       default_retention {
-        mode = "GOVERNANCE"
+        mode = "COMPLIANCE"  # Changed from GOVERNANCE
         years = 7
       }
     }
@@ -14,36 +15,22 @@ resource "aws_s3_bucket" "risk_audit_logs" {
   versioning {
     enabled = true
   }
-}
 
-# infra/terraform/audit_logs.tf - Critical Fix
-resource "aws_s3_bucket_object_lock_configuration" "audit_lock" {
-  object_lock_enabled = "Enabled"
-  rule {
-    default_retention {
-      mode = "COMPLIANCE"  # Change from GOVERNANCE
-      years = 7
+  # Add FINMA-mandeted encryption
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm = "AES256"
+      }
     }
   }
 }
 
-resource "aws_s3_bucket_policy" "audit_lock_policy" {
+# Enable MFA delete protection
+resource "aws_s3_bucket_versioning" "audit_versioning" {
   bucket = aws_s3_bucket.risk_audit_logs.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect    = "Deny"
-        Principal = "*"
-        Action    = "s3:DeleteObject"
-        Resource  = "${aws_s3_bucket.risk_audit_logs.arn}/*"
-        Condition = {
-          Null = {
-            "s3:ObjectLockRemainingRetentionDays" = "true"
-          }
-        }
-      }
-    ]
-  })
+  versioning_configuration {
+    status     = "Enabled"
+    mfa_delete = "Enabled"
+  }
 }

@@ -9,12 +9,6 @@ class FINMADualSubmitter:
     def __init__(self):
         self.taxonomy_versions = ["2.1", "3.0"]
     
-    def generate_submissions(self, backtest_data: dict) -> dict:
-        """Produce both XBRL 2.1 and 3.0 packages"""
-        return {
-            version: self._build_xbrl(backtest_data, version)
-            for version in self.taxonomy_versions
-        }
     
     def _build_xbrl(self, data: dict, version: str) -> bytes:
         """Generate XBRL document for specific taxonomy"""

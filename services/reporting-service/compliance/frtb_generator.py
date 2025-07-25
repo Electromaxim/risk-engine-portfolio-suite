@@ -35,6 +35,13 @@ class FRTBReporter:
         
         # Digital signature (HSM integration)
         return self._sign_report(xml_bytes, "SA-TBT")
+        
+    def generate_submissions(self, backtest_data: dict) -> dict:
+        """Produce both XBRL 2.1 and 3.0 packages"""
+        return {
+            version: self._build_xbrl(backtest_data, version)
+            for version in self.taxonomy_versions
+        }
     
     def generate_ima_qis_report(self, risk_metrics: dict) -> bytes:
         """Internal Models Approach Template"""

@@ -1,58 +1,40 @@
-import time
-from prometheus_client import Gauge
+# services/risk-engine-core/orchestration/gpu_dynamic_scheduler.py
+from prometheus_client import Counter
 
-# Prometheus metrics
-GPU_ALLOC_METRIC = Gauge('gpu_allocation_ratio', 'GPU resource allocation', ['workload_type'])
-MARKET_VOL_METRIC = Gauge('market_volatility_index', 'Real-time volatility index')
+# Add new metrics
+GPU_FAILURE_METRIC = Counter('gpu_failures_total', 'Count of GPU processing failures')
+VOLATILITY_BREAKER = Gauge('volatility_breaker', 'Circuit breaker status')
 
 class DynamicGPUOrchestrator:
-    def __init__(self):
-        self.volatility_index = 10.0  # Initial value
-    
-    def update_market_conditions(self):
-        """Fetch real-time volatility data"""
-        # Implementation would use market data service
-        self.volatility_index = self._calculate_vol_index()
-        MARKET_VOL_METRIC.set(self.volatility_index)
-    
     def allocate_resources(self) -> dict:
-        """Determine GPU split based on conditions"""
-        if self.volatility_index > 30:
-            allocation = {"scenario_analysis": 80, "intraday_var": 20}
-        elif time.strftime("%H:%M") > "15:30":  # After European close
-            allocation = {"scenario_analysis": 70, "intraday_var": 30}
-        else:
-            allocation = {"scenario_analysis": 40, "intraday_var": 60}
+        """Enhanced with circuit breaker and fallback"""
+        if VOLATILITY_BREAKER.get() == 1:
+            return {"fallback_mode": 100}  # CPU fallback
         
-        # Update metrics
-        for k, v in allocation.items():
-            GPU_ALLOC_METRIC.labels(workload_type=k).set(v)
-        
-        return allocation
+        try:
+            if self.volatility_index > 45:
+                allocation = {"scenario_analysis": 90, "intraday_var": 10}
+            elif self.volatility_index > 30:
+                allocation = {"scenario_analysis": 80, "intraday_var": 20}
+            elif time.strftime("%H:%M") > "15:30":
+                allocation = {"scenario_analysis": 70, "intraday_var": 30}
+            else:
+                allocation = {"scenario_analysis": 40, "intraday_var": 60}
+                
+            # Auto-scaling based on queue depth
+            queue_depth = self._get_calculation_queue()
+            if queue_depth > 1000:
+                allocation = {k: v * 1.5 for k, v in allocation.items()}
+                
+            return allocation
+        except Exception as e:
+            GPU_FAILURE_METRIC.inc()
+            VOLATILITY_BREAKER.set(1)  # Trigger circuit breaker
+            return self._fallback_allocation()
     
-    def _calculate_vol_index(self) -> float:
-        """Calculate proprietary volatility index"""
-        # Implementation would use VIX + currency volatility
-        return 25.0  # Placeholder
-    
-    def apply_kubernetes_quotas(self):
-        """Generate K8s resource quotas"""
-        alloc = self.allocate_resources()
+    def _fallback_allocation(self) -> dict:
+        """CPU fallback when GPU fails"""
         return {
-            "apiVersion": "v1",
-            "kind": "ResourceQuota",
-            "metadata": {"name": "gpu-quota"},
-            "spec": {
-                "hard": {
-                    "requests.nvidia.com/gpu": "100"
-                },
-                "scopes": ["BestEffort"],
-                "scopedSelector": {
-                    "matchExpressions": [{
-                        "key": "workload-type",
-                        "operator": "In",
-                        "values": list(alloc.keys())
-                    }]
-                }
-            }
+            "cpu_scenario_analysis": 60,
+            "cpu_intraday_var": 40
         }
